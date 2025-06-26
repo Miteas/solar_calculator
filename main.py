@@ -222,17 +222,32 @@ def calculate(array_size: str, tariff: str, export_rate: str = "0"):
     )
 
     def StatCard(title, value, color='primary'):
-        "A card with a statistics. Since there is no row/col span class it will take up 1 slot"
+        "A card with a statistic that will be placed in the responsive grid."
         return Card(P(title, cls=TextPresets.muted_sm), H3(value, cls=f'text-{color}'))
 
-    stats = [DivHStacked(StatCard(*data) for data in [
+    # Create a list of the data for the cards
+    stats_data = [
         ("Cost without solar", f"£{results['cost_wo_solar_annual']:.2f}", "blue-600"),
         ("Cost of solar install", f"£{results['total_system_cost']:.2f}", "blue-600"),
         ("Cost with solar", f"£{results['cost_w_solar_annual']:.2f}", "green-600"),
         ("Annual savings", f"£{results['annual_savings']:.2f}", "purple-600"),
         ("Export Revenue", f"£{results['export_revenue_annual']:.2f}", "purple-600"),
         ("Payback time", f"{results['payback_years']:.1f} years", "amber-600")
-    ])]
+    ]
+    
+    # Create the list of card components
+    stat_cards = [StatCard(*data) for data in stats_data]
+
+    # Use a responsive Grid instead of DivHStacked
+    stats_grid = Grid(
+        *stat_cards,      # Unpack the list of cards into the grid
+        cols_sm=2,        # 2 columns on small screens
+        cols_md=3,        # 3 columns on medium screens
+        cols_lg=6,        # 6 columns on large screens
+        gap=4,            # Add a gap between cards
+        cls="mt-8"        # Add top margin
+    )
+    
 
 
     @rt
@@ -306,7 +321,7 @@ def calculate(array_size: str, tariff: str, export_rate: str = "0"):
     )
     
     return Div(
-        DivVStacked(*stats, cls="mt-8"),  # Stats always visible
+        stats_grid,  # Use the new responsive grid here
         Div(comparison_chart, cls="mt-8"),
         Div(tabs, Div(id="tab-content", cls="mt-8"), cls="mt-8")
     )
