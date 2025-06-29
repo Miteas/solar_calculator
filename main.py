@@ -261,12 +261,12 @@ def calculate(array_size: str, tariff: str, export_rate: str = "0"):
 
     # Use a responsive Grid instead of DivHStacked
     stats_grid = Grid(
-        *stat_cards,  # Unpack the list of cards into the grid
-        cols_sm=2,  # 2 columns on small screens
-        cols_md=3,  # 3 columns on medium screens
-        cols_lg=6,  # 6 columns on large screens
-        gap=4,  # Add a gap between cards
-        cls="mt-8",  # Add top margin
+        *stat_cards,
+        cols_sm=2,  
+        cols_md=3,  
+        cols_lg=6,
+        gap=4, 
+        cls="mt-8",  
     )
 
     @rt
@@ -330,30 +330,32 @@ def calculate(array_size: str, tariff: str, export_rate: str = "0"):
         )
 
     tabs = Div(
-        # Button("Annual Overview", hx_get=overview, hx_trigger="change, click from:button"
-        #  hx_target="#tab-content", cls="..."),
         Button(
             "Monthly Breakdown",
             hx_get=monthly,
             hx_target="#tab-content",
+            hx_swap="innerHTML scroll:none",  
             cls="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded",
         ),
         Button(
             "Solar vs Consumption",
             hx_get=solar_vs_consumption,
             hx_target="#tab-content",
+            hx_swap="innerHTML scroll:none",  
             cls="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded",
         ),
         Button(
             "Export vs Savings",
             hx_get=export_savings,
             hx_target="#tab-content",
+            hx_swap="innerHTML scroll:none",  
             cls="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded",
         ),
         Button(
             "10-Year Projection",
             hx_get=cumulative_projection,
             hx_target="#tab-content",
+            hx_swap="innerHTML scroll:none",  
             cls="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded",
         ),
         cls="flex justify-center space-x-2 flex-wrap gap-2",
@@ -362,16 +364,30 @@ def calculate(array_size: str, tariff: str, export_rate: str = "0"):
     return Div(
         stats_grid,
         Div(comparison_chart, cls="mt-8"),
-        Div(tabs, Div(id="tab-content", cls="mt-8"), cls="mt-8"),
+        Div(
+            tabs,
+            Div(monthly(), id="tab-content", cls="mt-8 min-h-[600px]"),
+            cls="mt-8"
+        )
     )
-
-
 @rt
 def index():
     array_sizes = [f"{i / 1000:.1f}kW" for i in range(2000, 8001, 400)]
     tariffs = [
         col for col in tariff_df.columns if not col.split()[-1].lower() == "export"
     ]
+    export_rate_options = [f"{i/100:.2f}" for i in range(16)]
+
+    default_array_size = "4.0kW"
+    default_tariff = "Price Cap 2024"
+    default_export_rate = "0.04"
+
+
+    initial_results = calculate(
+        array_size=default_array_size,
+        tariff=default_tariff,
+        export_rate=default_export_rate,
+    )
 
     return (
         DivCentered(H2("Solar Install Payback Calculator"), cls="mt-8"),
@@ -379,7 +395,7 @@ def index():
         DivCentered(P(TEXTS["intro"]), cls="mt-4 px-4"),
         DividerLine(lwidth=2, y_space=8),
         Container(
-            Form(hx_post=calculate, hx_target="#results")(
+            Form(id="calc-form")(
                 Card(
                     DivCentered(H3("Solar System Configuration")),
                     Grid(
@@ -387,40 +403,38 @@ def index():
                             map(Option, array_sizes),
                             label="Array Size",
                             name="array_size",
-                            value="4.0kW",
+                            value=default_array_size,
                             hx_trigger="change",
                             hx_post=calculate,
                             hx_target="#results",
+                            hx_include="#calc-form",
                         ),
                         LabelSelect(
                             map(Option, tariffs),
                             label="Tariffs",
                             name="tariff",
-                            value="Price Cap 2024",
+                            value=default_tariff, 
                             hx_trigger="change",
                             hx_post=calculate,
                             hx_target="#results",
+                            hx_include="#calc-form",
                         ),
                         cols=2,
                     ),
-                    LabelRange(
-                        label=(
-                            "Export Rate (£/kWh) (Rates aren't guaranteed long term - "
-                            "don't choose your install on optimistic values)"
-                        ),
-                        value="0",
-                        step=0.01,
-                        min=0,
-                        max=0.15,
+                    LabelSelect(
+                        map(Option, export_rate_options),
+                        label="Export Rate (£/kWh)",
                         name="export_rate",
+                        value=default_export_rate,
                         hx_trigger="change",
                         hx_post=calculate,
                         hx_target="#results",
+                        hx_include="#calc-form",
                     ),
-                    DivCentered(Button("Calculate", type="submit", cls=ButtonT.ghost)),
                 ),
             ),
-            Div(id="results"),
+
+            Div(initial_results, id="results"),
             cls="space-y-4",
         ),
     )
