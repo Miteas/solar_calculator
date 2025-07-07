@@ -13,11 +13,33 @@ merged = pd.read_csv(
 # Round merged solar to 2dp
 merged["solar"] = merged["solar"].round(2)
 
-app, rt = fast_app(
-    hdrs=Theme.green.headers(
-        apex_charts=True, radii="lg", shadows="lg", font=" WDXL Lubrifont SC"
-    )
-)
+monster_hdrs = Theme.green.headers(radii="sm", font="sm", apex_charts=True)
+custom_font_hdrs = [
+    Link(rel="stylesheet", href="..."), # Your font link
+    Style("""
+        /* This base rule is still good */
+        body {
+            font-family: 'Forum', serif !important;
+            font-size: clamp(14px, 2.5vw, 18px);
+        }
+
+        /* --- UNIFIED STYLING RULES --- */
+        /* These rules now apply to H3/P on your main page AND the
+           h1/h2/p from markdown, because they are all inside .prose */
+        .prose h1 { font-size: clamp(24px, 4vw, 36px); }
+        .prose h2 { font-size: clamp(20px, 3.5vw, 28px); }
+        .prose h3 { font-size: clamp(18px, 3vw, 24px); }
+        .prose p { font-size: clamp(14px, 2.5vw, 18px); }
+        .prose ul, .prose ol { font-size: clamp(14px, 2.5vw, 18px); }
+        
+
+    """)
+]
+
+hdrs = monster_hdrs + custom_font_hdrs
+
+
+app, rt = fast_app(hdrs=hdrs, live=True)
 
 
 def calculate_costs_detailed(
@@ -370,6 +392,10 @@ def calculate(array_size: str, tariff: str, export_rate: str = "0"):
             cls="mt-8"
         )
     )
+
+
+
+
 @rt
 def index():
     array_sizes = [f"{i / 1000:.1f}kW" for i in range(2000, 8001, 400)]
@@ -392,7 +418,7 @@ def index():
     return (
         DivCentered(H2("Solar Install Payback Calculator"), cls="mt-8"),
         DividerLine(lwidth=2, y_space=4),
-        DivCentered(P(TEXTS["intro"]), cls="mt-4 px-4"),
+        DivCentered(P(TEXTS["intro"]), cls="prose container mx-auto py-2 px-4 sm:px-6 lg:px-8"),
         DividerLine(lwidth=2, y_space=8),
         Container(
             Form(id="calc-form")(
